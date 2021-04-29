@@ -7,6 +7,8 @@ import glob
 import shutil
 import sys
 
+ROOT.gROOT.SetBatch(ROOT.kTRUE)
+
 def find_nth(string, substring, n):
     start = string.find(substring)
     while start >= 0 and n > 1:
@@ -18,9 +20,12 @@ class RelValInfo:
     cmssw_version_full = ""
     cmssw_version = ""
     pu_type = ""
+    year_stamp = ""
     sample_type = ""
     sample_type_full = ""
     global_tag = ""
+    mahi_status = ""
+    data_info = ""
     
     def __init__(self,filename):
         filename_split = filename.split("__")
@@ -41,25 +46,37 @@ class RelValInfo:
 
         self.sample_type_full = filename_split[1]
         self.sample_type = self.sample_type_full[6:-3]
+
+        tmp_str_list = filename_split[2].replace("-","_").split("_")
+        for part in tmp_str_list:
+            if "mahi" in part:
+                self.mahi_status = part
+            if "sig" in part:
+                self.data_info = part
+            if "2017" in part or "2018" in part:
+                self.year_stamp = part
     
 #        print self.cmssw_version_full,self.cmssw_version,self.pu_type,self.global_tag,self.sample_type_full,self.sample_type
 
 
-def makeRelValPlots(filename,ref_filename,base_output_dir,update):
+def makeRelValPlots(filename,ref_filename,base_output_dir,update,label1,label2):
     
 
 
     sample_info = RelValInfo(filename)
     ref_info = RelValInfo(ref_filename)
     
-    subdir_name="EGRelVal_"+sample_info.sample_type+"_"+sample_info.cmssw_version+sample_info.pu_type+"Vs"+ref_info.cmssw_version+ref_info.pu_type
+    subdir_name="EGRelVal_"+sample_info.sample_type+"_"+sample_info.cmssw_version+sample_info.pu_type+sample_info.mahi_status+label1+"Vs"+ref_info.cmssw_version+ref_info.pu_type+ref_info.mahi_status+label2
 
     output_dir = base_output_dir.rstrip("/")+"/"+subdir_name
     
     leg_entry = sample_info.cmssw_version
     if sample_info.pu_type != "": leg_entry+="-"+sample_info.pu_type
+    if sample_info.mahi_status != "": leg_entry+="-"+sample_info.mahi_status
+    if label1 != "": leg_entry+="-"+label1
     refleg_entry = ref_info.cmssw_version+ref_info.pu_type
-    if ref_info.pu_type != "": leg_entry+="-"+ref_info.pu_type
+    if ref_info.mahi_status != "": refleg_entry+="-"+ref_info.mahi_status
+    if label2 != "": refleg_entry+="-"+ label2
 
     if os.path.isdir(output_dir):
         if update:
@@ -99,6 +116,8 @@ if __name__ == "__main__":
     parser.add_argument('refFilename',help='reference filename')
     parser.add_argument('-o','--outputDir',help='output base directory',required=True)
     parser.add_argument('--update',action='store_true',help='allows overwriting of existing directory')
+    parser.add_argument('--l1',help='label of sample 1',default = "")
+    parser.add_argument('--l2',help='label of sample 2',default = "")
     args = parser.parse_args()
 
-    makeRelValPlots(args.filename,args.refFilename,args.outputDir,args.update)
+    makeRelValPlots(args.filename,args.refFilename,args.outputDir,args.update,args.l1,args.l2)
