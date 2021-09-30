@@ -1,4 +1,8 @@
-
+*.json
+*.pyc
+test*/
+Run*/
+log.txt
 *~
 rootScripts/*.so
 rootScripts/*.d
